@@ -1,0 +1,13 @@
+# Dados da oficina nunca pertencem ao repositório.
+/dados/*
+!/dados/.gitkeep
+/logs/
+/runtime/
+*.sqlite
+*.sqlite-*
+*.db
+*.zip
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/

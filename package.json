@@ -1,0 +1,7 @@
+{
+  "name": "araubombas-compras",
+  "private": true,
+  "type": "module",
+  "description": "JavaScript nativo. Node é opcional e usado apenas nos testes.",
+  "scripts": { "test": "node --test testes/compras.test.js" }
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Araubombas | Controle de compras</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+    <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+    <aside class="lateral">
+        <a href="/" class="marca"><span class="simbolo">A</span><span>Arau<b>bombas</b><small>GESTÃO DA OFICINA</small></span></a>
+        <p class="rotulo-menu">CONTROLE DE COMPRAS</p>
+        <nav aria-label="Navegação principal">
+            <button data-view="compras" class="ativo">▦ <span>Compras</span></button>
+            <button data-view="agenda">▤ <span>Agenda de pagamentos</span></button>
+            <button data-view="quitadas">✓ <span>Compras quitadas</span></button>
+        </nav>
+        <div class="rodape-lateral"><strong>Araubombas</strong><small>Dados salvos neste computador</small></div>
+    </aside>
+    <div class="area-principal">
+        <header><span>Oficina / <b id="localizacao">Compras</b></span><span class="indicador-local">● Uso local</span></header>
+        <main>
+            <div class="cabecalho-pagina">
+                <div><p class="sobretitulo">CONTROLE FINANCEIRO</p><h1 id="titulo">Compras da oficina</h1><p class="subtitulo">Quem comprou, quanto falta e quando pagar.</p></div>
+                <div class="acoes">
+                    <button id="importar" class="secundario">Importar JSON</button>
+                    <button id="exportar" class="secundario">↓ Exportar dados</button>
+                    <button id="nova-compra" class="primario">＋ Nova compra</button>
+                    <input id="arquivo-json" type="file" accept=".json,application/json" hidden>
+                </div>
+            </div>
+            <div id="aviso" class="aviso" role="status" hidden></div>
+            <section class="resumo" aria-label="Resumo de pagamentos" id="resumo"></section>
+            <div class="faixa-prazo"><span>Vence em breve = de amanhã até os próximos</span><label><span class="somente-leitor">Prazo em dias</span><select id="prazo-breve"><option value="3">3 dias</option><option value="7" selected>7 dias</option><option value="15">15 dias</option><option value="30">30 dias</option></select></label><small>Resumo considera busca, fornecedor, responsável e emissão.</small></div>
+            <section class="painel">
+                <div class="titulo-painel"><div><h2 id="titulo-lista">Todas as compras</h2><p>Abra um pedido para conferir detalhes e confirmar pagamentos.</p></div><button id="limpar-filtros" class="texto-botao">Limpar filtros</button></div>
+                <div class="filtros">
+                    <label class="busca">Buscar<input id="busca" type="search" placeholder="Pedido, fornecedor ou responsável"></label>
+                    <label>Fornecedor<select id="fornecedor"><option value="">Todos</option></select></label>
+                    <label>Responsável<select id="responsavel-filtro"><option value="">Todos</option><option value="__sem__">Não informado</option></select></label>
+                    <label>Emitidas de<input id="emissao-inicio" type="date"></label>
+                    <label>Até<input id="emissao-fim" type="date"></label>
+                </div>
+                <div id="situacoes" class="abas" aria-label="Filtrar situação">
+                    <button data-status="todas" class="selecionada">Todas</button><button data-status="vencida">Vencidas</button><button data-status="hoje">Vence hoje</button><button data-status="breve">Vence em breve</button><button data-status="futura">A vencer</button><button data-status="paga">Quitadas</button><button data-status="conferir">Conferir valores</button>
+                </div>
+                <div class="ordenacao">
+                    <span id="contagem">Carregando…</span>
+                    <label>Ordenar por<select id="ordenar"><option value="due">Próximo vencimento</option><option value="total">Valor total da compra</option><option value="issued">Data de emissão</option><option value="remaining">Parcelas restantes</option><option value="supplier">Fornecedor</option><option value="responsible">Responsável</option></select></label>
+                    <label>Ordem<select id="direcao"><option value="asc">Crescente / mais próximo</option><option value="desc">Decrescente / mais distante</option></select></label>
+                </div>
+                <div class="rolagem-tabela"><table><thead id="colunas"></thead><tbody id="linhas"></tbody></table></div>
+                <div id="vazio" class="vazio" hidden><span>▤</span><h3>Nenhuma compra encontrada</h3><p>Cadastre uma compra, importe seu JSON ou ajuste os filtros.</p></div>
+                <div class="rodape-tabela">Vencimento não confirma pagamento. As baixas são registradas por você.</div>
+            </section>
+            <footer>Araubombas · Controle de compras <span>Organização para o dia a dia da oficina.</span></footer>
+        </main>
+    </div>
+
+    <dialog id="detalhes" aria-labelledby="titulo-detalhes">
+        <div class="modal-topo"><span class="sobretitulo">DETALHES DA COMPRA</span><button data-close="detalhes" class="fechar" aria-label="Fechar detalhes">×</button></div>
+        <div id="conteudo-detalhes"></div>
+        <div class="modal-acoes"><button data-close="detalhes" class="secundario">Fechar</button><button id="editar-compra" class="primario">Editar compra</button></div>
+    </dialog>
+
+    <dialog id="cadastro" class="modal-largo" aria-labelledby="titulo-cadastro">
+        <form id="formulario-compra">
+            <div class="modal-topo"><span class="sobretitulo">REGISTRO DE COMPRA</span><button type="button" data-close="cadastro" class="fechar" aria-label="Fechar cadastro">×</button></div>
+            <h2 id="titulo-cadastro">Nova compra</h2><p>Preencha os dados conforme o pedido ou a nota.</p>
+            <div class="grade-formulario">
+                <label>Número do pedido<input name="code" required maxlength="80" placeholder="Ex.: 132816"></label>
+                <label>Fornecedor<input name="supplier" required maxlength="120" list="lista-fornecedores"></label>
+                <label>Responsável pela compra<input name="responsible" required maxlength="120" list="lista-responsaveis" placeholder="Nome de quem comprou"></label>
+                <label>Data de emissão<input name="issued" type="date" required></label>
+                <label>Valor total (R$)<input name="total" type="number" min="0.01" max="1000000000" step="0.01" required></label>
+            </div>
+            <datalist id="lista-fornecedores"></datalist><datalist id="lista-responsaveis"></datalist>
+            <section class="condicoes">
+                <h3>Condição de pagamento</h3><p>Os prazos contam dias corridos desde a emissão. Ex.: 15/30/45.</p>
+                <div class="grade-formulario"><label>Entrada (R$)<input name="downPayment" type="number" min="0" step="0.01" value="0" required></label><label>Prazos em dias<input name="terms" placeholder="30/60"></label></div>
+                <div class="linha-flex"><strong id="saldo-parcelar"></strong><button type="button" id="gerar-pagamentos" class="secundario">Gerar pagamentos</button></div>
+                <p>A entrada é descontada do total. Ao alterar total, entrada, emissão ou prazos, gere novamente ou confira os pagamentos abaixo. Vencimentos podem ser ajustados conforme os boletos.</p>
+            </section>
+            <div class="linha-flex"><h3>Entrada e parcelas</h3><button type="button" id="adicionar-parcela" class="texto-botao">＋ Adicionar parcela</button></div>
+            <div id="pagamentos-formulario"></div>
+            <p id="soma-parcelas" class="soma-parcelas"></p>
+            <label>Observações<textarea name="notes" maxlength="2000" rows="3" placeholder="Peças, serviço ou detalhes da compra"></textarea></label>
+            <p id="erro-cadastro" class="erro-formulario" role="alert"></p>
+            <div class="modal-acoes"><button type="button" data-close="cadastro" class="secundario">Cancelar</button><button type="submit" class="primario">Salvar compra</button></div>
+        </form>
+    </dialog>
+
+    <dialog id="baixa" aria-labelledby="titulo-baixa">
+        <form id="formulario-baixa"><h2 id="titulo-baixa">Confirmar pagamento</h2><p id="descricao-baixa"></p><label>Data do pagamento<input id="data-baixa" type="date" required></label><p id="erro-baixa" class="erro-formulario" role="alert"></p><div class="modal-acoes"><button type="button" data-close="baixa" class="secundario">Cancelar</button><button type="submit" class="primario">Confirmar pagamento</button></div></form>
+    </dialog>
+    <noscript>Ative o JavaScript do navegador para utilizar o programa.</noscript>
+</body>
+</html>
